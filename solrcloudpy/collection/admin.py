@@ -58,8 +58,13 @@ class SolrCollectionAdmin(CollectionBase):
           - `create_node_set`: Allows defining which nodes to spread the new collection across.
           - `collection_config_name`: the name of the configuration to use for this collection
           - `router_field`: if this field is specified, the router will look at the value of the field in an input document to compute the hash and identify of a shard instead of looking at the `uniqueKey` field
+          - `tlog_replicas` : the number of tlog replicas to create for this collection (solr 7.0+)
+          - `pull_replicas` : the number of pull replicas to create for this collection (solr 7.0+)
+          - `nrt_replicas` : the number of nrt replicas to create for this collection, by default solr creates NRT replicas if not defined. (solr 7.0+)
+          - `auto_add_replicas`
 
         Additional parameters are further documented at https://cwiki.apache.org/confluence/display/solr/Collections+API#CollectionsAPI-CreateaCollection
+        Please check the the collection management documentation for your specific version of solr to verify the arguments available.
         """
         params = {
             "name": self.name,
@@ -90,6 +95,22 @@ class SolrCollectionAdmin(CollectionBase):
         router_field = kwargs.get("router_field")
         if router_field:
             params["router.field"] = router_field
+
+        tlog_replicas = kwargs.get("tlog_replicas")
+        if tlog_replicas:
+            params["tlog_replicas"] = tlog_replicas
+
+        pull_replicas = kwargs.get("pull_replicas")
+        if pull_replicas:
+            params["pull_replicas"] = pull_replicas
+
+        nrt_replicas = kwargs.get("nrt_replicas")
+        if nrt_replicas:
+            params["nrt_replicas"] = nrt_replicas
+
+        auto_add_replicas = kwargs.get("auto_add_replicas")
+        if auto_add_replicas:
+            params["auto_add_replicas"] = auto_add_replicas
 
         # this collection doesn't exist yet, actually create it
         if not self.exists() or force:
