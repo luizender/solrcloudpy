@@ -90,21 +90,13 @@ class SolrConnection(object):
 
         if type(server) == str:
             self.url = self.url_template.format(server=server)
-            servers = [self.url, self.url]
-            if detect_live_nodes:
-                url = servers[0]
-                self.servers = self.detect_nodes(url)
-            else:
-                self.servers = servers
+            self.servers = [self.url, self.url]
         if type(server) == list:
-            servers = [self.url_template.format(server=a) for a in server]
-            if detect_live_nodes:
-                url = servers[0]
-                self.servers = self.detect_nodes(url)
-            else:
-                self.servers = servers
+            self.servers = [self.url_template.format(server=a) for a in server]
 
         self.client = _Request(self)
+        if detect_live_nodes:
+            self.servers = self.live_nodes
 
     def detect_nodes(self, _):
         """
@@ -131,7 +123,9 @@ class SolrConnection(object):
         if "children" not in response["tree"][0]:
             return []
 
-        if response["tree"][0]["data"]["title"] == "/collections":
+        if "text" in response["tree"][0] and response["tree"][0]["text"] == "/collections":
+            data = response["tree"][0]["children"]
+        elif "data" in response["tree"][0] and response["tree"][0]["data"]["title"] == "/collections":
             # solr 5.3 and older
             data = response["tree"][0]["children"]
         else:
@@ -149,7 +143,7 @@ class SolrConnection(object):
                             break
         colls = []
         if data:
-            colls = [node["data"]["title"] for node in data]
+            colls = [node["text"] if "text" in node else node["data"]["title"] for node in data]
         return colls
 
     def _list_cores(self):
@@ -163,7 +157,7 @@ class SolrConnection(object):
         }
         response = self.client.get(
             ("/{webappdir}/admin/cores".format(webappdir=self.webappdir)), params
-        ).result
+        ).result.dict
         cores = list(response.get("status", {}).keys())
         return cores
 
@@ -245,7 +239,7 @@ class SolrConnection(object):
         """
         params = {"detail": "true", "path": "/live_nodes"}
         response = self.client.get(self.zk_path, params).result
-        children = [d["data"]["title"] for d in response["tree"][0]["children"]]
+        children = [d["text"] if "text" in d else d["data"]["title"] for d in response["tree"][0]["children"]]
         nodes = [c.replace("_solr", "") for c in children]
         return [self.url_template.format(server=a) for a in nodes]
 
