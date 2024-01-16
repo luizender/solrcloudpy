@@ -6,7 +6,7 @@ import uuid
 import requests
 from future.utils import iteritems
 from requests.auth import HTTPBasicAuth
-from requests.exceptions import ConnectionError, HTTPError
+from requests.exceptions import ConnectionError, HTTPError, ReadTimeout
 
 try:
     from urllib.parse import urljoin
@@ -125,7 +125,7 @@ class _Request(object):
                 else:
                     result = SolrResponse(r)
 
-            except (ConnectionError, HTTPError) as e:
+            except (ConnectionError, HTTPError, ReadTimeout) as e:
                 logger.exception("Failed to connect to server at %s. e=%s", host, e)
 
                 # Track retries, and take a server with too many retries out of the pool
