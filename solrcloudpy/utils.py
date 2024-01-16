@@ -6,7 +6,7 @@ import uuid
 import requests
 from future.utils import iteritems
 from requests.auth import HTTPBasicAuth
-from requests.exceptions import ConnectionError, HTTPError, ReadTimeout
+from requests.exceptions import ConnectionError, HTTPError, Timeout
 
 try:
     from urllib.parse import urljoin
@@ -20,6 +20,7 @@ try:
             return value.encode("utf-8", "ignore")
 
         return value
+
 except NameError:
 
     def encodeUnicode(value):
@@ -125,7 +126,7 @@ class _Request(object):
                 else:
                     result = SolrResponse(r)
 
-            except (ConnectionError, HTTPError, ReadTimeout) as e:
+            except (ConnectionError, HTTPError, Timeout) as e:
                 logger.exception("Failed to connect to server at %s. e=%s", host, e)
 
                 # Track retries, and take a server with too many retries out of the pool
@@ -253,7 +254,7 @@ class SolrResult(DictObject):
         :rtype: dict
         """
         res = {}
-        for (k, v) in iteritems(self.__dict__):
+        for k, v in iteritems(self.__dict__):
             if isinstance(v, SolrResult):
                 res[k] = v.dict
             else:
